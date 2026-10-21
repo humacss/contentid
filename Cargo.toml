@@ -1,0 +1,30 @@
+[package]
+name = "contentid"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+description = "Platform-agnostic deterministic Content IDs via minbin + BLAKE3"
+repository = "https://github.com/humacss/contentid"
+keywords = ["id", "deterministic", "content-addressable", "no-std", "hashing"]
+categories = ["data-structures", "encoding", "no-std"]
+
+[features]
+default = ["std"]
+alloc = ["minbin/alloc"]
+std = ["alloc", "blake3/std"]
+serde = ["dep:serde"]
+local = ["std", "dep:gxhash", "gxhash/std"]
+
+[dependencies]
+blake3 = { version = "1", default-features = false }
+minbin = { git = "https://github.com/humacss/minbin.git", branch = "add-types", default-features = false, features = ["alloc"] }
+serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
+gxhash = { version = "3.5", optional = true, default-features = false }
+
+[dev-dependencies]
+criterion = "0.7"
+
+[[bench]]
+name = "hash_algorithms"
+harness = false
+required-features = ["local"]
