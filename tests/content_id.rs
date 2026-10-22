@@ -1,4 +1,4 @@
-use contentid::{ContentId, ContentId128, Error, ToContentId};
+use contentid::{ContentId, ContentId128, ToContentId};
 
 #[derive(Clone, Debug, Default, PartialEq, Eq, Hash)]
 struct TestPayload {
@@ -25,6 +25,22 @@ minbin::minbin_struct! { SameBytesDifferentType [
     self.time: i64,
     self.label: String
 ] }
+
+impl ToContentId for TestPayload {
+    type Error = contentid::Error;
+
+    fn write_content(&self, hasher: &mut contentid::ContentHasher) -> Result<(), Self::Error> {
+        hasher.update_value(self)
+    }
+}
+
+impl ToContentId for SameBytesDifferentType {
+    type Error = contentid::Error;
+
+    fn write_content(&self, hasher: &mut contentid::ContentHasher) -> Result<(), Self::Error> {
+        hasher.update_value(self)
+    }
+}
 
 #[test]
 fn content_id_is_deterministic_for_same_type_and_data() {
@@ -206,22 +222,6 @@ fn content_hasher_matches_tuple_id_macro() {
     );
 }
 
-#[test]
-fn verify_reports_mismatch() {
-    let payload = TestPayload {
-        account_id: 7,
-        time: 42,
-        label: "hello".to_string(),
-    };
-    let other = TestPayload {
-        label: "goodbye".to_string(),
-        ..payload.clone()
-    };
-
-    assert_eq!(Ok(()), payload.verify(payload.content_id()));
-    assert_eq!(Err(Error::Mismatch), payload.verify(other.content_id()));
-}
-
 #[cfg(feature = "local")]
 #[test]
 fn local_content_id_is_stable_for_the_same_hash_content() {
@@ -327,4 +327,17 @@ fn protocol_ids_agree_for_differently_named_types_with_identical_encoding() {
         contentid::typed_content_id("Message.v1", &first),
         contentid::typed_content_id("Message.v2", &second)
     );
+}
+
+#[test]
+fn explicit_minbin_opt_in_preserves_the_type_name_and_encoding_hash_format() {
+    let value = TestPayload {
+        account_id: 7,
+        time: -42,
+        label: "hello".into(),
+    };
+    let mut bytes = core::any::type_name::<TestPayload>().as_bytes().to_vec();
+    bytes.push(0);
+    bytes.extend(minbin::to_bytes(&value).unwrap());
+    assert_eq!(value.content_id(), ContentId::from_bytes(&bytes));
 }

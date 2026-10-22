@@ -1,12 +1,17 @@
 #![no_std]
 
-//! Deterministic content IDs for minbin-encoded Rust values.
+//! Deterministic content IDs with caller-selected serialization and MinBin helpers.
 //!
-//! `ContentId::from_bytes` hashes raw bytes directly. The [`ToContentId`]
-//! blanket implementation hashes `core::any::type_name::<T>()`, a zero byte,
-//! and the value's minbin encoding. That gives Rust-type domain separation for
-//! Rust-local value IDs. A Rust type name is not a unique binary identifier
-//! and is not guaranteed to remain stable across compiler versions.
+//! [`ContentId::from_bytes`] hashes raw bytes directly. [`ToContentId`] is
+//! explicitly opt-in: implement its encoding method and choose its error type.
+//! Its default ID method hashes `core::any::type_name::<Self>()`, a zero byte,
+//! and the encoded content. Implementations using MinBin can delegate encoding
+//! to [`ContentHasher::update_value`]; other serializers can write their own
+//! deterministic bytes through [`ContentHasher::update_bytes`]. The default ID
+//! method can also be overridden.
+//!
+//! A Rust type name is not a unique binary identifier and is not guaranteed
+//! to remain stable across compiler versions.
 //!
 //! Shared protocols should pass an explicit stable type identifier into
 //! [`id!`] or use [`typed_content_id`] instead of relying on a Rust type path.
@@ -16,11 +21,24 @@
 //! alone does not guarantee matching IDs.
 //!
 //! ```
-//! use contentid::{ContentId, ToContentId, typed_content_id};
+//! use contentid::{ContentHasher, ContentId, Error, ToContentId, minbin, typed_content_id};
+//!
+//! #[derive(Default)]
+//! struct Counter { value: u64 }
+//!
+//! minbin::minbin_struct! { Counter [ self.value: u64 ] }
+//!
+//! impl ToContentId for Counter {
+//!     type Error = Error;
+//!
+//!     fn write_content(&self, hasher: &mut ContentHasher) -> Result<(), Self::Error> {
+//!         hasher.update_value(self)
+//!     }
+//! }
 //!
 //! let bytes_id = ContentId::from_bytes(b"example bytes");
 //! let protocol_id = typed_content_id("example.Counter.v1", &42_u64);
-//! let rust_id = 42_u64.content_id();
+//! let rust_id = Counter { value: 42 }.content_id();
 //! assert_eq!(protocol_id, contentid::id!(type = "example.Counter.v1", &42_u64));
 //! assert_ne!(bytes_id, rust_id);
 //! ```

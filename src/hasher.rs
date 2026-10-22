@@ -1,4 +1,4 @@
-//! Incremental hashing over raw bytes and minbin values.
+//! Incremental hashing over caller-encoded bytes and MinBin values.
 
 use minbin::ToFromBytes;
 
@@ -19,7 +19,10 @@ impl ContentHasher {
         self.0.update(bytes);
     }
 
-    /// Serialize a value with minbin and add it to the hash stream.
+    /// Serialize a value with MinBin, the default encoding helper.
+    ///
+    /// For another serializer, encode the value first and pass its bytes to
+    /// [`update_bytes`](Self::update_bytes).
     pub fn update_value<T>(&mut self, value: &T) -> Result<(), Error>
     where
         T: for<'a> ToFromBytes<'a>,

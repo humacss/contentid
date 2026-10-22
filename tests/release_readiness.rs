@@ -45,9 +45,19 @@ fn numeric_views_have_fixed_big_endian_order() {
 fn serialization_errors_propagate_and_leave_builder_unchanged() {
     let oversized = "x".repeat(<String as minbin::ToFromBytes<'_>>::MAX_BYTES);
     let error = Error::Minbin(minbin::ToFromByteError::MaxBytesExceeded);
-    assert_eq!(oversized.try_content_id(), Err(error.clone()));
-    assert_eq!(oversized.try_content_id_128(), Err(error.clone()));
-    assert_eq!(oversized.verify(ContentId::ZERO), Err(error.clone()));
+    struct Oversized(String);
+
+    impl ToContentId for Oversized {
+        type Error = Error;
+
+        fn write_content(&self, hasher: &mut ContentHasher) -> Result<(), Self::Error> {
+            hasher.update_value(&self.0)
+        }
+    }
+
+    let value = Oversized(oversized.clone());
+    assert_eq!(value.try_content_id(), Err(error.clone()));
+    assert_eq!(value.try_content_id_128(), Err(error.clone()));
     assert_eq!(
         contentid::try_typed_content_id("Text", &oversized),
         Err(error.clone())
