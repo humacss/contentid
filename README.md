@@ -104,9 +104,9 @@ Add `contentid` to your project:
 contentid = "1.0.0"
 ```
 
-Version 1.0.0 is being prepared for its first release and requires MinBin 1.0.
-Both must be published to crates.io before the dependency shown above can
-be resolved.
+Version 1.0.0 is being prepared for its first release and uses the published
+MinBin 1.0 dependency. Content ID must be published to crates.io before the
+dependency shown above can be resolved.
 The supported Rust version is 1.90 or later.
 
 ### Distributed IDs
@@ -393,7 +393,7 @@ they do not execute WebAssembly.
 
 Version 1.0.0 is the initial release candidate. Its API covers raw bytes, Rust
 values, explicit protocol identifiers, and optional local hashing.
-MinBin 1.0 must be published first.
+It uses MinBin 1.0 from crates.io.
 
 Distributed IDs depend on the identifier and exact chosen encoding. The fixed
 protocol vectors in the tests protect the default MinBin encoding; keep those vectors
@@ -402,22 +402,8 @@ across builds, Rust releases, or platforms.
 
 ## Development
 
-Before MinBin 1.0 is published, test against a local checkout of its
-`add-types` branch. Compatibility was checked at revision
-`d0cce27aecef4b1eb4af293de113dbd0783e1217`. Create an ignored
-`.cargo/config.toml` using the path to that checkout:
-
-```toml
-[patch.crates-io]
-minbin = { path = "/path/to/minbin" }
-```
-
-The package manifest keeps the crates.io dependency. CI also tests this pinned
-revision through `.github/scripts/minbin-candidate.sh`; its package dry run uses
-the candidate override too. Once MinBin 1.0 is published, remove the CI override
-and its workflow steps, remove any local override, and regenerate local
-lockfiles before running final registry checks. Overrides validate compatibility
-with that source; they do not prove the published dependency can be resolved.
+Development and CI use the published MinBin dependency from crates.io.
+No local or Git dependency override is needed.
 
 Run checks from this repository:
 
@@ -430,9 +416,9 @@ cargo clippy --all-targets --all-features -- -D warnings
 cargo doc --no-deps --all-features
 ```
 
-After MinBin 1.0 is published, run `cargo publish --dry-run --all-features`
-with a clean working tree and no local dependency overrides. This validates
-the package without uploading it.
+Before publishing, run `cargo publish --dry-run --all-features` with a clean
+working tree and no local dependency overrides. This validates the package
+without uploading it.
 
 ## License
 

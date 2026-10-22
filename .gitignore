@@ -4,5 +4,5 @@
 # Dependency resolution is local; consumers use their own lockfiles.
 Cargo.lock
 
-# Local release-candidate dependency overrides; never ship these.
+# Local dependency overrides; never ship these.
 /.cargo/config.toml
