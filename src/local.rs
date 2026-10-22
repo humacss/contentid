@@ -1,18 +1,22 @@
 //! Disposable local IDs over Rust [`Hash`] values.
 //!
 //! Uses [`DefaultHasher`] unless the caller supplies another [`Hasher`].
-//! The local API returns only the 64 bits exposed by [`Hasher::finish`], even
-//! when a supplied algorithm supports a wider digest. Distributed IDs use the
-//! separate 256-bit [`crate::ContentId`] API.
+//! The built-in ID helpers and [`LocalContentHasher::finalize_u64`] return the
+//! 64 bits exposed by [`Hasher::finish`]. To obtain a custom hasher's wider
+//! output, pass it by mutable reference, let the builder go out of scope, and
+//! call the hasher's own finishing method. Distributed IDs use the separate
+//! 256-bit [`crate::ContentId`] API.
 //! Neither Rust's hashing format nor its default algorithm is a stable protocol.
 
 use core::hash::{Hash, Hasher};
 use std::hash::DefaultHasher;
 
-/// Incremental 64-bit local ID builder using a caller-selected Rust hasher.
+/// Incremental local ID builder using a caller-selected Rust hasher.
 ///
-/// Custom hashers change the algorithm or seed, not the output width exposed
-/// by this API. Use the distributed [`crate::ContentId`] API for 256-bit IDs.
+/// [`finalize_u64`](Self::finalize_u64) returns the standard 64-bit output.
+/// Borrow a custom hasher through [`with_hasher`](Self::with_hasher) to retain
+/// access to its algorithm-specific finishing methods after the builder goes
+/// out of scope, including wider outputs where supported.
 #[derive(Clone)]
 pub struct LocalContentHasher<H = DefaultHasher>(H);
 
@@ -28,6 +32,9 @@ impl LocalContentHasher {
 
 impl<H: Hasher> LocalContentHasher<H> {
     /// Use the supplied hasher, preserving its seed and existing state.
+    ///
+    /// Pass `&mut hasher` to borrow it. Once the builder goes out of scope,
+    /// use the original hasher's own finishing method for custom output types.
     pub fn with_hasher(hasher: H) -> Self {
         Self(hasher)
     }

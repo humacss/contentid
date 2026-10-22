@@ -45,8 +45,10 @@
 //!
 //! With the optional `local` feature, `LocalContentHasher` hashes Rust
 //! `core::hash::Hash` values with Rust's `DefaultHasher`, or a caller-supplied
-//! hasher. Its standard output is 64 bits. Use it for disposable local state;
-//! Rust's hashing format and default algorithm are not stable protocols.
+//! hasher. Its built-in finalizer returns 64 bits. Borrow a custom hasher to
+//! access its own finishing methods afterward, including wider outputs where
+//! supported. Use local IDs for disposable state; Rust's hashing format and
+//! default algorithm are not stable protocols.
 //!
 //! `ContentId` is the canonical 256-bit ID. Integer forms such as `i64` and
 //! `u128` are deterministic, lossy views over fixed digest prefixes decoded

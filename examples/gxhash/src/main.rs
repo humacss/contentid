@@ -4,9 +4,15 @@
 use contentid::LocalContentHasher;
 
 fn main() {
-    let mut hasher = LocalContentHasher::with_hasher(gxhash::GxHasher::with_seed(42));
-    hasher.update_value("Position");
-    hasher.update_value(&(10_i32, 20_i32));
-    // Rust's Hasher interface returns 64 bits, even for GxHash.
-    println!("{}", hasher.finalize_u64());
+    let mut gx = gxhash::GxHasher::with_seed(42);
+    {
+        // Borrow the hasher so its algorithm-specific output remains accessible.
+        let mut hasher = LocalContentHasher::with_hasher(&mut gx);
+        hasher.update_value("Position");
+        hasher.update_value(&(10_i32, 20_i32));
+    }
+
+    // Finish through GxHash itself to obtain all 128 bits.
+    let id: u128 = gx.finish_u128();
+    println!("{id:032x}");
 }

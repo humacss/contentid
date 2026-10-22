@@ -56,11 +56,10 @@ content as a cache key. Other machines do not need to reproduce that ID, and
 you can discard it when the process ends.
 
 Local IDs hash Rust values directly through the `Hash` trait, without first
-serializing them. They use Rust's `DefaultHasher` by default and return a
-**64-bit `u64`** because that is the output exposed by Rust's `Hasher` trait.
-This limit applies to the local API, including caller-supplied hashers; it is
-not the default size of distributed IDs. Enable the `local` feature to use it.
-You can supply your own hasher when you need a different algorithm or seed.
+serializing them. The built-in helpers default to Rust's `DefaultHasher` and
+return a **64-bit `u64`**. You can choose another algorithm or seed, and borrow a
+custom hasher to obtain its own output type, such as GxHash's full 128-bit
+result. Enable the `local` feature to use these APIs.
 
 Keep the hash inputs, implementation, and seed consistent wherever you compare
 local IDs. There is no compatibility promise across builds, Rust versions,
@@ -199,7 +198,9 @@ Reuse the same `RandomState` when you need comparable IDs; a new state uses a
 new random seed. Your choice of algorithm, seed, and `Hash` implementations
 determines the guarantees your local IDs can provide.
 
-For an explicit GxHash example, see [the GxHash example](https://github.com/humacss/contentid/blob/main/examples/gxhash/src/main.rs).
+For full 128-bit GxHash output, see [the GxHash example](https://github.com/humacss/contentid/blob/main/examples/gxhash/src/main.rs).
+It passes `&mut gx` to the builder, then calls `gx.finish_u128()` after the
+builder goes out of scope.
 On a machine with the required AES instructions, run:
 
 ```sh
@@ -208,8 +209,9 @@ RUSTFLAGS="-C target-cpu=native" cargo run --manifest-path examples/gxhash/Cargo
 
 GxHash is isolated in a separate example package and is not a dependency of
 this crate. Applications that want it must add it themselves. It is
-non-cryptographic and requires supported CPU instructions. The standard Rust `Hasher` interface exposes 64 bits, including
-when you supply GxHash.
+non-cryptographic and requires supported CPU instructions.
+`LocalContentHasher::finalize_u64()` returns 64 bits; the example uses
+GxHash's own finishing method to obtain its full 128-bit result.
 
 ### IDs tied to a Rust type
 
@@ -317,15 +319,17 @@ assert_eq!(id, ContentId::from_bytes(b"file contents"));
 
 ## ID sizes
 
-| API | Default output |
+| API | Output |
 | --- | --- |
 | Distributed: `typed_content_id` or `id!(type = "TypeIdentifier", &value)` | 256-bit `ContentId` |
 | Rust type-based: `value.content_id()` | 256-bit `ContentId` |
 | Local: `local_typed_content_id_u64` or `LocalContentHasher::finalize_u64` | 64-bit `u64` |
+| Local builder borrowing a custom hasher | Hasher-specific output, such as GxHash's 128-bit `u128` |
 
-The local API uses the standard Rust `Hasher` interface, so supplying a
-wider-output algorithm does not expose its extra bits through this API.
-Converting that `u64` to a larger integer would not add collision resistance.
+The standard Rust `Hasher::finish()` method returns a `u64`. To obtain a
+wider result from a custom hasher, borrow it through `with_hasher(&mut hasher)`
+and call its own finishing method afterward. Converting a 64-bit result to a
+larger integer does not add collision resistance.
 
 `ContentId` holds the full 256-bit BLAKE3 digest. `ContentId128` keeps its first
 128 bits. Both support comparison, ordering, hashing, and hexadecimal display.
