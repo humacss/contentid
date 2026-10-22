@@ -376,6 +376,10 @@ you need to handle encoding errors.
 The crate supports `no_std` with an allocator. Allocation support is always
 enabled; there is no separate `alloc` feature.
 
+CI checks `wasm32-unknown-unknown` compilation on Rust 1.90 and stable with
+default features, no default features, and all features. These are build checks;
+they do not execute WebAssembly.
+
 ## Release status
 
 Version 1.0.0 is the initial release candidate. Its API covers raw bytes, Rust

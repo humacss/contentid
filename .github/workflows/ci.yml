@@ -50,10 +50,26 @@ jobs:
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-        with:
-          targets: wasm32-unknown-unknown
       - run: cargo check --lib --no-default-features
+
+  wasm:
+    name: WebAssembly (Rust ${{ matrix.toolchain }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        toolchain: ["1.90.0", stable]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: wasm32-unknown-unknown
+      - run: cargo check --lib --target wasm32-unknown-unknown
       - run: cargo check --lib --target wasm32-unknown-unknown --no-default-features
+      - run: cargo check --lib --target wasm32-unknown-unknown --all-features
 
   gxhash-example:
     runs-on: ubuntu-latest
