@@ -1,0 +1,9 @@
+[package]
+name = "contentid-gxhash-example"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+contentid = { path = "../..", features = ["local"] }
+gxhash = "3.5"

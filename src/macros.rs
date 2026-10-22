@@ -5,7 +5,7 @@
 ///
 /// Use `id!(value)` for a single struct or payload value. Use multiple
 /// arguments for tuple-like IDs where every value is intentionally part of the
-/// content. The `id!("ProtocolName", value)` form is reserved for explicit
+/// content. The `id!(type = "ProtocolName", &value)` form is reserved for explicit
 /// stable protocol identifiers and matches
 /// [`typed_content_id`](crate::typed_content_id).
 ///
@@ -16,7 +16,7 @@
 /// must be handled.
 #[macro_export]
 macro_rules! id {
-    ($type_identifier:literal, $value:expr $(,)?) => {{
+    (type = $type_identifier:expr, $value:expr $(,)?) => {{
         $crate::typed_content_id($type_identifier, $value)
     }};
     ($($item:expr),+ $(,)?) => {{

@@ -13,13 +13,12 @@ default = ["std"]
 alloc = ["minbin/alloc"]
 std = ["alloc", "blake3/std"]
 serde = ["dep:serde"]
-local = ["std", "dep:gxhash", "gxhash/std"]
+local = ["std"]
 
 [dependencies]
 blake3 = { version = "1", default-features = false }
 minbin = { git = "https://github.com/humacss/minbin.git", branch = "add-types", default-features = false, features = ["alloc"] }
 serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
-gxhash = { version = "3.5", optional = true, default-features = false }
 
 [dev-dependencies]
 criterion = "0.7"

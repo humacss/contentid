@@ -8,6 +8,11 @@ use crate::{ContentHasher, ContentId, ContentId128, Error};
 
 /// Try to build a 256-bit content ID from an explicit stable type identifier
 /// plus one value's minbin content.
+///
+/// The hash input is the MinBin encoding of the identifier as a `String`
+/// (big-endian `u32` UTF-8 byte length followed by UTF-8 bytes), then the value's
+/// MinBin encoding. Rust type names are not included. Producers must agree on
+/// the exact encoding, not only the meaning of the value.
 pub fn try_typed_content_id<T>(type_identifier: &str, value: &T) -> Result<ContentId, Error>
 where
     T: for<'a> ToFromBytes<'a>,

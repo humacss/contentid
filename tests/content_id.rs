@@ -163,11 +163,11 @@ fn id_macro_hashes_explicit_type_identifier_and_value_content() {
         time: 42,
         label: "Mira".to_string(),
     };
-    let id = contentid::id!("ChatMessage", &value);
+    let id = contentid::id!(type = "ChatMessage", &value);
     let manual = contentid::typed_content_id("ChatMessage", &value);
 
     assert_eq!(manual, id);
-    assert_ne!(contentid::id!("OtherMessage", &value), id);
+    assert_ne!(contentid::id!(type = "OtherMessage", &value), id);
 }
 
 #[test]
@@ -235,9 +235,9 @@ fn local_content_id_is_stable_for_the_same_hash_content() {
         ..payload.clone()
     };
 
-    let first = contentid::local_typed_content_id_u128("TestPayload", &payload);
-    let second = contentid::local_typed_content_id_u128("TestPayload", &payload);
-    let changed = contentid::local_typed_content_id_u128("TestPayload", &changed);
+    let first = contentid::local_typed_content_id_u64("TestPayload", &payload);
+    let second = contentid::local_typed_content_id_u64("TestPayload", &payload);
+    let changed = contentid::local_typed_content_id_u64("TestPayload", &changed);
 
     assert_eq!(first, second);
     assert_ne!(first, changed);
@@ -261,9 +261,9 @@ fn local_content_id_accepts_hash_only_content() {
         time: 43,
     };
 
-    let first = contentid::local_typed_content_id_u128("HashOnlyPayload", &payload);
-    let second = contentid::local_typed_content_id_u128("HashOnlyPayload", &payload);
-    let changed = contentid::local_typed_content_id_u128("HashOnlyPayload", &changed);
+    let first = contentid::local_typed_content_id_u64("HashOnlyPayload", &payload);
+    let second = contentid::local_typed_content_id_u64("HashOnlyPayload", &payload);
+    let changed = contentid::local_typed_content_id_u64("HashOnlyPayload", &changed);
 
     assert_eq!(first, second);
     assert_ne!(first, changed);
@@ -271,26 +271,60 @@ fn local_content_id_accepts_hash_only_content() {
 
 #[cfg(feature = "local")]
 #[test]
-fn local_content_id_accepts_small_hash_writes_at_page_boundaries() {
-    use std::hash::{Hash, Hasher};
-
-    struct Bytes<'a>(&'a [u8]);
-
-    impl Hash for Bytes<'_> {
-        fn hash<H: Hasher>(&self, state: &mut H) {
-            state.write(self.0);
-        }
-    }
-
-    const GXHASH_PAGE_SIZE: usize = 4096;
-    let allocation = vec![7_u8; GXHASH_PAGE_SIZE * 2 + 16];
-    let base = allocation.as_ptr() as usize;
-    let page_boundary = (GXHASH_PAGE_SIZE - (base & (GXHASH_PAGE_SIZE - 1))) % GXHASH_PAGE_SIZE;
-    let start = page_boundary + GXHASH_PAGE_SIZE - 8;
-    let bytes = Bytes(&allocation[start..start + 8]);
-
+fn local_ids_use_rust_default_hasher() {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let mut expected = DefaultHasher::new();
+    "Counter".hash(&mut expected);
+    42_u64.hash(&mut expected);
     assert_eq!(
-        contentid::local_typed_content_id_u128("Bytes", &bytes),
-        contentid::local_typed_content_id_u128("Bytes", &bytes)
+        expected.finish(),
+        contentid::local_typed_content_id_u64("Counter", &42_u64)
+    );
+}
+
+#[cfg(feature = "local")]
+#[test]
+fn local_ids_accept_a_caller_supplied_hasher() {
+    use std::hash::{DefaultHasher, Hash, Hasher};
+    let state = std::collections::hash_map::RandomState::new();
+    use std::hash::BuildHasher;
+    let mut expected = state.build_hasher();
+    "Counter".hash(&mut expected);
+    42_u64.hash(&mut expected);
+    let mut actual = contentid::LocalContentHasher::with_hasher(state.build_hasher());
+    actual.update_value("Counter");
+    actual.update_value(&42_u64);
+    assert_eq!(expected.finish(), actual.finalize_u64());
+
+    let mut expected = DefaultHasher::new();
+    expected.write(b"hello");
+    let mut actual = contentid::LocalContentHasher::new();
+    actual.update_bytes(b"hello");
+    assert_eq!(expected.finish(), actual.finalize_u64());
+}
+
+#[test]
+fn protocol_ids_agree_for_differently_named_types_with_identical_encoding() {
+    let first = TestPayload {
+        account_id: 7,
+        time: 42,
+        label: "hello".into(),
+    };
+    let second = SameBytesDifferentType {
+        account_id: 7,
+        time: 42,
+        label: "hello".into(),
+    };
+    assert_eq!(
+        minbin::to_bytes(&first).unwrap(),
+        minbin::to_bytes(&second).unwrap()
+    );
+    assert_eq!(
+        contentid::typed_content_id("Message.v1", &first),
+        contentid::typed_content_id("Message.v1", &second)
+    );
+    assert_ne!(
+        contentid::typed_content_id("Message.v1", &first),
+        contentid::typed_content_id("Message.v2", &second)
     );
 }

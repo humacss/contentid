@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use contentid::{
-    ContentHasher, LocalContentHasher, local_typed_content_id_u128, typed_content_id_u128,
+    ContentHasher, LocalContentHasher, local_typed_content_id_u64, typed_content_id_u128,
 };
 use criterion::{Criterion, Throughput, criterion_group, criterion_main};
 
@@ -47,11 +47,11 @@ fn hash_algorithms(c: &mut Criterion) {
             black_box(hasher.finalize_u128())
         });
     });
-    preencoded.bench_function("gxhash_128", |b| {
+    preencoded.bench_function("default_hasher_64", |b| {
         b.iter(|| {
             let mut hasher = LocalContentHasher::new();
             hasher.update_bytes(black_box(&encoded));
-            black_box(hasher.finalize_u128())
+            black_box(hasher.finalize_u64())
         });
     });
     preencoded.finish();
@@ -67,11 +67,11 @@ fn hash_algorithms(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("gxhash_128", |b| {
+    group.bench_function("default_hasher_64", |b| {
         b.iter(|| {
             let mut hasher = LocalContentHasher::new();
             hasher.update_value(black_box(&input));
-            black_box(hasher.finalize_u128())
+            black_box(hasher.finalize_u64())
         });
     });
 
@@ -82,9 +82,9 @@ fn hash_algorithms(c: &mut Criterion) {
     typed.bench_function("blake3_128", |b| {
         b.iter(|| black_box(typed_content_id_u128("LocalIdInput", black_box(&input))));
     });
-    typed.bench_function("gxhash_128", |b| {
+    typed.bench_function("default_hasher_64", |b| {
         b.iter(|| {
-            black_box(local_typed_content_id_u128(
+            black_box(local_typed_content_id_u64(
                 "LocalIdInput",
                 black_box(&input),
             ))

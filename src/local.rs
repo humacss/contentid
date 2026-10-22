@@ -1,107 +1,55 @@
-//! Fast process-local IDs over Rust [`Hash`] values.
+//! Disposable local IDs over Rust [`Hash`] values.
+//!
+//! Uses [`DefaultHasher`] unless the caller supplies another [`Hasher`].
+//! The local API returns only the 64 bits exposed by [`Hasher::finish`], even
+//! when a supplied algorithm supports a wider digest. Distributed IDs use the
+//! separate 256-bit [`crate::ContentId`] API.
+//! Neither Rust's hashing format nor its default algorithm is a stable protocol.
 
 use core::hash::{Hash, Hasher};
+use std::hash::DefaultHasher;
 
-const LOCAL_HASH_SEED: i64 = 0x517c_c1b7_2722_0a95;
-
-/// Incremental GxHash-128 builder for non-persistent local IDs.
+/// Incremental 64-bit local ID builder using a caller-selected Rust hasher.
+///
+/// Custom hashers change the algorithm or seed, not the output width exposed
+/// by this API. Use the distributed [`crate::ContentId`] API for 256-bit IDs.
 #[derive(Clone)]
-pub struct LocalContentHasher(LocalHasher);
+pub struct LocalContentHasher<H = DefaultHasher>(H);
 
-#[derive(Clone)]
-struct LocalHasher(gxhash::GxHasher);
-
-impl Hasher for LocalHasher {
-    fn finish(&self) -> u64 {
-        self.0.finish()
-    }
-
-    fn write(&mut self, bytes: &[u8]) {
-        self.0.write_usize(bytes.len());
-        let mut chunks = bytes.chunks_exact(16);
-        for chunk in &mut chunks {
-            self.0
-                .write_u128(u128::from_le_bytes(chunk.try_into().unwrap()));
-        }
-        let remainder = chunks.remainder();
-        if !remainder.is_empty() {
-            let mut tail = [0; 16];
-            tail[..remainder.len()].copy_from_slice(remainder);
-            self.0.write_u128(u128::from_le_bytes(tail));
-        }
-    }
-
-    fn write_u8(&mut self, value: u8) {
-        self.0.write_u8(value);
-    }
-
-    fn write_u16(&mut self, value: u16) {
-        self.0.write_u16(value);
-    }
-
-    fn write_u32(&mut self, value: u32) {
-        self.0.write_u32(value);
-    }
-
-    fn write_u64(&mut self, value: u64) {
-        self.0.write_u64(value);
-    }
-
-    fn write_u128(&mut self, value: u128) {
-        self.0.write_u128(value);
-    }
-
-    fn write_usize(&mut self, value: usize) {
-        self.0.write_usize(value);
-    }
-
-    fn write_i8(&mut self, value: i8) {
-        self.0.write_i8(value);
-    }
-
-    fn write_i16(&mut self, value: i16) {
-        self.0.write_i16(value);
-    }
-
-    fn write_i32(&mut self, value: i32) {
-        self.0.write_i32(value);
-    }
-
-    fn write_i64(&mut self, value: i64) {
-        self.0.write_i64(value);
-    }
-
-    fn write_i128(&mut self, value: i128) {
-        self.0.write_i128(value);
-    }
-
-    fn write_isize(&mut self, value: isize) {
-        self.0.write_isize(value);
+impl LocalContentHasher {
+    /// Create a builder with Rust's default hasher and its fixed initial state.
+    ///
+    /// This is not a randomly seeded `HashMap` hasher. Results are disposable
+    /// local identities, with no compatibility promise across Rust releases.
+    pub fn new() -> Self {
+        Self(DefaultHasher::new())
     }
 }
 
-impl LocalContentHasher {
-    /// Create an empty local content hasher.
-    pub fn new() -> Self {
-        Self(LocalHasher(gxhash::GxHasher::with_seed(LOCAL_HASH_SEED)))
+impl<H: Hasher> LocalContentHasher<H> {
+    /// Use the supplied hasher, preserving its seed and existing state.
+    pub fn with_hasher(hasher: H) -> Self {
+        Self(hasher)
     }
 
-    /// Add raw bytes to the hash stream.
+    /// Pass bytes directly to the selected hasher.
+    ///
+    /// Write-boundary behavior is determined by that hasher. Callers are
+    /// responsible for framing multiple fields to avoid ambiguous inputs.
     pub fn update_bytes(&mut self, bytes: &[u8]) {
         self.0.write(bytes);
     }
 
-    /// Add a typed Rust value to the hash stream without an intermediate encoding.
-    pub fn update_value<T>(&mut self, value: &T)
-    where
-        T: Hash + ?Sized,
-    {
+    /// Hash a Rust value without an intermediate serialization.
+    ///
+    /// This does not automatically include the Rust type name.
+    pub fn update_value<T: Hash + ?Sized>(&mut self, value: &T) {
         value.hash(&mut self.0);
     }
 
-    /// Finish as a non-persistent local `u128` ID.
-    pub fn finalize_u128(self) -> u128 {
-        self.0.0.finish_u128()
+    /// Finish using the selected hasher's standard 64-bit output.
+    pub fn finalize_u64(self) -> u64 {
+        self.0.finish()
     }
 }
 
@@ -111,13 +59,13 @@ impl Default for LocalContentHasher {
     }
 }
 
-/// Build a local `u128` ID from a type identifier and typed Rust value.
-pub fn local_typed_content_id_u128<T>(type_identifier: &str, value: &T) -> u128
-where
-    T: Hash + ?Sized,
-{
+/// Build a disposable local 64-bit ID with Rust's default hasher.
+///
+/// Hashes the identifier followed by the value. Use [`LocalContentHasher::with_hasher`]
+/// to choose a different hashing algorithm or seed.
+pub fn local_typed_content_id_u64<T: Hash + ?Sized>(type_identifier: &str, value: &T) -> u64 {
     let mut hasher = LocalContentHasher::new();
     hasher.update_value(type_identifier);
     hasher.update_value(value);
-    hasher.finalize_u128()
+    hasher.finalize_u64()
 }
