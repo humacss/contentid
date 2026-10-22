@@ -104,9 +104,6 @@ Add `contentid` to your project:
 contentid = "1.0.0"
 ```
 
-Version 1.0.0 is being prepared for its first release and uses the published
-MinBin 1.0 dependency. Content ID must be published to crates.io before the
-dependency shown above can be resolved.
 The supported Rust version is 1.90 or later.
 
 ### Distributed IDs
@@ -389,11 +386,10 @@ CI checks `wasm32-unknown-unknown` compilation on Rust 1.90 and stable with
 default features, no default features, and all features. These are build checks;
 they do not execute WebAssembly.
 
-## Release status
+## Compatibility
 
-Version 1.0.0 is the initial release candidate. Its API covers raw bytes, Rust
-values, explicit protocol identifiers, and optional local hashing.
-It uses MinBin 1.0 from crates.io.
+Content ID supports raw bytes, Rust values, explicit protocol identifiers, and
+optional local hashing. The default serialization helpers use MinBin 1.0.
 
 Distributed IDs depend on the identifier and exact chosen encoding. The fixed
 protocol vectors in the tests protect the default MinBin encoding; keep those vectors
