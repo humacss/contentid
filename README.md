@@ -1,3 +1,8 @@
+[![Crates.io](https://img.shields.io/crates/v/contentid.svg)](https://crates.io/crates/contentid)
+[![Docs](https://docs.rs/contentid/badge.svg)](https://docs.rs/contentid)
+[![Qlty | Maintainability](https://qlty.sh/gh/humacss/projects/contentid/maintainability.svg)](https://qlty.sh/gh/humacss/projects/contentid)
+[![Qlty | Code Coverage](https://qlty.sh/gh/humacss/projects/contentid/coverage.svg)](https://qlty.sh/gh/humacss/projects/contentid)
+
 # contentid
 
 Deterministic, platform-agnostic, content-derived, decentralized ID generator.
