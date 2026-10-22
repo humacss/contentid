@@ -23,6 +23,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - run: cargo test
       - run: cargo test --all-features
@@ -34,6 +37,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           components: rustfmt, clippy
@@ -49,6 +55,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - run: cargo check --lib --no-default-features
 
@@ -63,6 +72,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
         with:
           toolchain: ${{ matrix.toolchain }}
@@ -77,6 +89,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       # Compile only; the runner is not required to execute AES instructions.
       - run: cargo check --manifest-path examples/gxhash/Cargo.toml
@@ -89,6 +104,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@7dcc700092a1a8b9c17ba0e140b4e34e93000946 # 1.90.0
       - run: cargo check --lib --all-features
       - run: cargo check --lib --no-default-features
@@ -99,6 +117,9 @@ jobs:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           persist-credentials: false
+      - name: Use MinBin release candidate
+        shell: bash
+        run: bash .github/scripts/minbin-candidate.sh
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - run: cargo package --list
       # Dry run only: build the actual package; never upload or use a token.

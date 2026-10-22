@@ -408,10 +408,12 @@ Before MinBin 1.0 is published, test against a local checkout of its
 minbin = { path = "/path/to/minbin" }
 ```
 
-The package manifest keeps the crates.io dependency. Once MinBin 1.0 is
-published, remove this override and regenerate local lockfiles before running
-final registry checks. Local overrides validate compatibility with that source;
-they do not prove the published dependency can be resolved.
+The package manifest keeps the crates.io dependency. CI also tests this pinned
+revision through `.github/scripts/minbin-candidate.sh`; its package dry run uses
+the candidate override too. Once MinBin 1.0 is published, remove the CI override
+and its workflow steps, remove any local override, and regenerate local
+lockfiles before running final registry checks. Overrides validate compatibility
+with that source; they do not prove the published dependency can be resolved.
 
 Run checks from this repository:
 
