@@ -2,9 +2,13 @@
 name = "contentid"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.90"
 license = "MIT"
-description = "Platform-agnostic deterministic Content IDs via minbin + BLAKE3"
+description = "Deterministic, platform-agnostic, content-derived, decentralized ID generator."
 repository = "https://github.com/humacss/contentid"
+documentation = "https://docs.rs/contentid"
+readme = "README.md"
+include = ["/src/**", "/tests/**", "/benches/**", "/Cargo.toml", "/README.md", "/LICENSE", "/CHANGELOG.md"]
 keywords = ["id", "deterministic", "content-addressable", "no-std", "hashing"]
 categories = ["data-structures", "encoding", "no-std"]
 
@@ -17,7 +21,7 @@ local = ["std"]
 
 [dependencies]
 blake3 = { version = "1", default-features = false }
-minbin = { git = "https://github.com/humacss/minbin.git", branch = "add-types", default-features = false, features = ["alloc"] }
+minbin = { version = "1.0.0", default-features = false, features = ["alloc"] }
 serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
 
 [dev-dependencies]
@@ -27,3 +31,6 @@ criterion = "0.7"
 name = "hash_algorithms"
 harness = false
 required-features = ["local"]
+
+[package.metadata.docs.rs]
+all-features = true

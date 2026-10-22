@@ -25,7 +25,7 @@
 //! assert_ne!(bytes_id, rust_id);
 //! ```
 //!
-//! With the optional `local` feature, [`LocalContentHasher`] hashes Rust
+//! With the optional `local` feature, `LocalContentHasher` hashes Rust
 //! `core::hash::Hash` values with Rust's `DefaultHasher`, or a caller-supplied
 //! hasher. Its standard output is 64 bits. Use it for disposable local state;
 //! Rust's hashing format and default algorithm are not stable protocols.

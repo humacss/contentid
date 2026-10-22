@@ -1,6 +1,6 @@
 # contentid
 
-Generate the same ID from the same content, without a central ID generator.
+Deterministic, platform-agnostic, content-derived, decentralized ID generator.
 
 `contentid` is a deterministic content ID generator for Rust. When two systems
 work with the same content, they can independently calculate the same ID.
@@ -25,7 +25,7 @@ Sometimes different programs or platforms need to agree on the ID without
 coordinating with each other.
 
 Distributed IDs use [minbin](https://github.com/humacss/minbin) to produce a
-platform-independent binary representation, then hash those bytes with
+platform-agnostic binary representation, then hash those bytes with
 BLAKE3. Give the content an explicit identifier such as `"ChatMessage.v1"`,
 and every producer using that identifier and the same encoded bytes can
 calculate the same 256-bit `ContentId`.
@@ -92,13 +92,17 @@ resistance than a 64-bit local ID.
 
 ## Usage
 
-The crate is currently in development and has not been published to crates.io.
-To use this checkout from a nearby project:
+Add `contentid` to your project:
 
 ```toml
 [dependencies]
-contentid = { path = "../contentid" }
+contentid = "0.1.0"
 ```
+
+Version 0.1.0 is being prepared for its first release and requires MinBin 1.0.
+Until both are published to crates.io, use a local checkout as described in
+[the release guide](https://github.com/humacss/contentid/blob/main/RELEASE.md).
+The supported Rust version is 1.90 or later.
 
 ### Distributed IDs
 
@@ -148,7 +152,7 @@ For disposable local state, enable the `local` feature:
 
 ```toml
 [dependencies]
-contentid = { path = "../contentid", features = ["local"] }
+contentid = { version = "0.1.0", features = ["local"] }
 ```
 
 Then use a value that implements Rust's `Hash` trait:
@@ -189,7 +193,7 @@ Reuse the same `RandomState` when you need comparable IDs; a new state uses a
 new random seed. Your choice of algorithm, seed, and `Hash` implementations
 determines the guarantees your local IDs can provide.
 
-For an explicit GxHash example, see [the GxHash example](examples/gxhash/src/main.rs).
+For an explicit GxHash example, see [the GxHash example](https://github.com/humacss/contentid/blob/main/examples/gxhash/src/main.rs).
 On a machine with the required AES instructions, run:
 
 ```sh
@@ -197,8 +201,8 @@ RUSTFLAGS="-C target-cpu=native" cargo run --manifest-path examples/gxhash/Cargo
 ```
 
 GxHash is isolated in a separate example package and is not a dependency of
-this crate. Applications that want it must add it themselves. It is non-cryptographic and requires supported CPU
-instructions. The standard Rust `Hasher` interface exposes 64 bits, including
+this crate. Applications that want it must add it themselves. It is
+non-cryptographic and requires supported CPU instructions. The standard Rust `Hasher` interface exposes 64 bits, including
 when you supply GxHash.
 
 ### IDs tied to a Rust type
@@ -306,15 +310,17 @@ you need to handle that error.
 
 The crate supports `no_std` with an allocator.
 
-## Current state
+## Release status
 
-The crate is in development. The existing API covers raw bytes, Rust values,
-explicit protocol identifiers, and optional local hashing.
+Version 0.1.0 is the initial release candidate. Its API covers raw bytes, Rust
+values, explicit protocol identifiers, and optional local hashing. The
+[release guide](https://github.com/humacss/contentid/blob/main/RELEASE.md)
+tracks the remaining publication steps. MinBin 1.0 must be published first.
 
-Before a crates.io release, the Git dependency on MinBin needs to become a
-compatible released dependency. Compatibility needs verification across
-supported platforms, and the API needs a release review. Fixed protocol test
-vectors protect the current format.
+Distributed IDs depend on the identifier and exact MinBin encoding. The fixed
+protocol vectors in the tests protect the current encoding; keep those vectors
+unchanged when updating dependencies. Local IDs make no compatibility promise
+across builds, Rust releases, or platforms.
 
 ## Development
 
@@ -327,9 +333,13 @@ Run checks from this repository:
 
 ```sh
 cargo fmt --check
-cargo test --locked
-cargo test --locked --all-features
-cargo check --locked --no-default-features
-cargo clippy --locked --all-targets --all-features -- -D warnings
-cargo doc --locked --no-deps --all-features
+cargo test
+cargo test --all-features
+cargo check --no-default-features
+cargo clippy --all-targets --all-features -- -D warnings
+cargo doc --no-deps --all-features
 ```
+
+## License
+
+MIT. See [LICENSE](https://github.com/humacss/contentid/blob/main/LICENSE).

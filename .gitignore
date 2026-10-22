@@ -1,2 +1,5 @@
 /target/
 .DS_Store
+
+# Dependency resolution is local; consumers use their own lockfiles.
+Cargo.lock
