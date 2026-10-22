@@ -24,9 +24,10 @@ content an identifier, hash the value, and use the result where it belongs.
 Sometimes different programs or platforms need to agree on the ID without
 coordinating with each other.
 
-Distributed IDs use [minbin](https://github.com/humacss/minbin) to produce a
-platform-agnostic binary representation, then hash those bytes with
-BLAKE3. Give the content an explicit identifier such as `"ChatMessage.v1"`,
+The default distributed helpers use [minbin](https://github.com/humacss/minbin)
+to produce a platform-agnostic binary representation, then hash those bytes
+with BLAKE3. You can also supply bytes from another deterministic serializer.
+Give the content an explicit identifier such as `"ChatMessage.v1"`,
 and every producer using that identifier and the same encoded bytes can
 calculate the same 256-bit `ContentId`.
 
@@ -96,12 +97,12 @@ Add `contentid` to your project:
 
 ```toml
 [dependencies]
-contentid = "0.1.0"
+contentid = "1.0.0"
 ```
 
-Version 0.1.0 is being prepared for its first release and requires MinBin 1.0.
-Until both are published to crates.io, use a local checkout as described in
-[the release guide](https://github.com/humacss/contentid/blob/main/RELEASE.md).
+Version 1.0.0 is being prepared for its first release and requires MinBin 1.0.
+Both must be published to crates.io before the dependency shown above can
+be resolved.
 The supported Rust version is 1.90 or later.
 
 ### Distributed IDs
@@ -152,7 +153,7 @@ For disposable local state, enable the `local` feature:
 
 ```toml
 [dependencies]
-contentid = { version = "0.1.0", features = ["local"] }
+contentid = { version = "1.0.0", features = ["local"] }
 ```
 
 Then use a value that implements Rust's `Hash` trait:
@@ -208,13 +209,15 @@ when you supply GxHash.
 ### IDs tied to a Rust type
 
 If both sides share the same Rust type, `ToContentId` is another convenience:
-it uses BLAKE3 over the Rust type name and MinBin bytes. It is available with
-the default features and is separate from the configurable local hasher.
+its default implementation hashes the Rust type name, a zero byte, and your
+encoded content with BLAKE3. It is separate from the configurable local hasher.
 
-Implement MinBin serialization for your type, then call `content_id()`:
+`ToContentId` is explicitly opt-in. Implementing MinBin serialization does not
+automatically add ID methods to a type. For MinBin, implement the trait by
+delegating `write_content` to the default `ContentHasher::update_value` helper:
 
 ```rust
-use contentid::{ToContentId, minbin};
+use contentid::{ContentHasher, Error, ToContentId, minbin};
 
 #[derive(Default)]
 struct Message {
@@ -227,6 +230,14 @@ minbin::minbin_struct! { Message [
     self.text: String
 ] }
 
+impl ToContentId for Message {
+    type Error = Error;
+
+    fn write_content(&self, hasher: &mut ContentHasher) -> Result<(), Self::Error> {
+        hasher.update_value(self)
+    }
+}
+
 let message = Message {
     sender: 7,
     text: "Hello".to_string(),
@@ -234,11 +245,59 @@ let message = Message {
 
 let id = message.content_id();
 assert_eq!(id, message.content_id());
-assert!(message.verify(id).is_ok());
 ```
 
 The Rust type name is part of this ID. Two differently named types can encode
 to the same bytes and still produce different IDs through `ToContentId`.
+
+### Choosing another serializer
+
+Implement `write_content` using your serializer's bytes and choose its error
+type. The type does not need to implement MinBin. This example uses a small
+explicit big-endian encoding, but the same method can call another binary
+serializer and pass its result to `hasher.update_bytes(&bytes)`:
+
+```rust
+use core::convert::Infallible;
+use contentid::{ContentHasher, ToContentId};
+
+struct Counter(u64);
+
+impl ToContentId for Counter {
+    type Error = Infallible;
+
+    fn write_content(&self, hasher: &mut ContentHasher) -> Result<(), Self::Error> {
+        hasher.update_bytes(&self.0.to_be_bytes());
+        Ok(())
+    }
+}
+
+let counter = Counter(42);
+let rust_type_id = counter.content_id();
+assert_eq!(rust_type_id, counter.content_id());
+
+// For distributed identity, supply a stable identifier instead of a type name.
+// update_value uses the default MinBin encoding for the identifier only.
+let mut hasher = ContentHasher::new();
+hasher.update_value(&"Counter.v1".to_string()).unwrap();
+counter.write_content(&mut hasher).unwrap();
+let distributed_id = hasher.finalize();
+assert_eq!(distributed_id, contentid::typed_content_id("Counter.v1", &42_u64));
+```
+
+Choose a deterministic, platform-agnostic encoding for distributed use and
+keep it identical on every producer. Different encodings can produce different
+IDs for values with the same meaning. The identifier-plus-content byte format
+above matches the default distributed helpers when the encoded bytes match.
+
+The associated `Error` is returned unchanged by `try_content_id()` and
+`try_content_id_128()`. It does not need to wrap a MinBin error.
+
+You can override `try_content_id()` to replace the default type-name-based
+identity scheme. The default `content_id()` and 128-bit methods delegate to
+that result. For foreign types such as primitives, use the existing free
+functions or a wrapper type; Rust's orphan rules prevent downstream trait
+implementations on foreign types.
 
 ### Raw bytes
 
@@ -295,39 +354,49 @@ format, so add lengths or other boundaries where your format needs them.
 Write-boundary behavior depends on that implementation; add explicit framing
 when hashing multiple raw byte fields.
 
-The convenience functions panic if MinBin serialization fails. Use
+The `ToContentId` convenience methods panic if your chosen encoding fails;
+the MinBin convenience functions panic if MinBin serialization fails. Use
 `try_content_id`, `try_typed_content_id`, or `ContentHasher::update_value` when
-you need to handle that error.
+you need to handle encoding errors.
 
 ## Features
 
 | Feature | What it enables |
 | --- | --- |
-| `std` (default) | Standard library support and `alloc` |
-| `alloc` | MinBin allocation support; the crate requires allocation even with default features disabled |
+| `std` (default) | Standard library support |
 | `serde` | Serde serialization and deserialization for the ID storage types |
 | `local` | Rust `Hash` local IDs with a configurable hasher; enables `std` |
 
-The crate supports `no_std` with an allocator.
+The crate supports `no_std` with an allocator. Allocation support is always
+enabled; there is no separate `alloc` feature.
 
 ## Release status
 
-Version 0.1.0 is the initial release candidate. Its API covers raw bytes, Rust
-values, explicit protocol identifiers, and optional local hashing. The
-[release guide](https://github.com/humacss/contentid/blob/main/RELEASE.md)
-tracks the remaining publication steps. MinBin 1.0 must be published first.
+Version 1.0.0 is the initial release candidate. Its API covers raw bytes, Rust
+values, explicit protocol identifiers, and optional local hashing.
+MinBin 1.0 must be published first.
 
-Distributed IDs depend on the identifier and exact MinBin encoding. The fixed
-protocol vectors in the tests protect the current encoding; keep those vectors
+Distributed IDs depend on the identifier and exact chosen encoding. The fixed
+protocol vectors in the tests protect the default MinBin encoding; keep those vectors
 unchanged when updating dependencies. Local IDs make no compatibility promise
 across builds, Rust releases, or platforms.
 
 ## Development
 
-Protocol macro calls use `id!(type = identifier, &value)`. The earlier
-`id!("Identifier", &value)` shorthand has been replaced so ordinary sequences
-such as `id!(1_u64, 2_u64)` are unambiguous. This syntax change preserves the
-protocol identifier's encoding and the resulting ID.
+Before MinBin 1.0 is published, test against a local checkout of its
+`add-types` branch. Compatibility was checked at revision
+`bc87f2945f6ba0de0ac0c45c30ff2430473d94a4`. Create an ignored
+`.cargo/config.toml` using the path to that checkout:
+
+```toml
+[patch.crates-io]
+minbin = { path = "/path/to/minbin" }
+```
+
+The package manifest keeps the crates.io dependency. Once MinBin 1.0 is
+published, remove this override and regenerate local lockfiles before running
+final registry checks. Local overrides validate compatibility with that source;
+they do not prove the published dependency can be resolved.
 
 Run checks from this repository:
 
@@ -335,10 +404,14 @@ Run checks from this repository:
 cargo fmt --check
 cargo test
 cargo test --all-features
-cargo check --no-default-features
+cargo test --no-default-features
 cargo clippy --all-targets --all-features -- -D warnings
 cargo doc --no-deps --all-features
 ```
+
+After MinBin 1.0 is published, run `cargo publish --dry-run --all-features`
+with a clean working tree and no local dependency overrides. This validates
+the package without uploading it.
 
 ## License
 
