@@ -364,7 +364,6 @@ you need to handle encoding errors.
 | Feature | What it enables |
 | --- | --- |
 | `std` (default) | Standard library support |
-| `serde` | Serde serialization and deserialization for the ID storage types |
 | `local` | Rust `Hash` local IDs with a configurable hasher; enables `std` |
 
 The crate supports `no_std` with an allocator. Allocation support is always

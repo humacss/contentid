@@ -15,13 +15,11 @@ categories = ["data-structures", "encoding", "no-std"]
 [features]
 default = ["std"]
 std = ["blake3/std"]
-serde = ["dep:serde"]
 local = ["std"]
 
 [dependencies]
 blake3 = { version = "1", default-features = false }
 minbin = { version = "1.0.0", default-features = false, features = ["alloc"] }
-serde = { version = "1", optional = true, default-features = false, features = ["derive"] }
 
 [dev-dependencies]
 criterion = "0.7"

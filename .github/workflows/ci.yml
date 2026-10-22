@@ -54,7 +54,6 @@ jobs:
           targets: wasm32-unknown-unknown
       - run: cargo check --lib --no-default-features
       - run: cargo check --lib --target wasm32-unknown-unknown --no-default-features
-      - run: cargo check --lib --target wasm32-unknown-unknown --no-default-features --features serde
 
   gxhash-example:
     runs-on: ubuntu-latest

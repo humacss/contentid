@@ -11,7 +11,6 @@ const U128_DIGEST_BYTES: usize = 16;
 
 /// A 256-bit BLAKE3 content ID.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct ContentId([u8; 32]);
 
 impl ContentId {
@@ -93,7 +92,6 @@ impl From<ContentId> for u128 {
 
 /// A 128-bit convenience truncation of a 256-bit content ID.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-#[cfg_attr(feature = "serde", derive(serde::Deserialize, serde::Serialize))]
 pub struct ContentId128([u8; 16]);
 
 impl ContentId128 {
