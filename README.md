@@ -340,6 +340,13 @@ primitive format. `ContentId128::as_u128()` explicitly uses big-endian order.
 Shorter IDs have less collision resistance. Keep the full digest when you
 need the full BLAKE3-256 identity.
 
+## Sending IDs with your own data
+
+Choose serialization in your application. See the
+[MinBin wrapper example](https://github.com/humacss/contentid/blob/main/examples/minbin_wrapper.rs)
+for a consumer-owned wrapper with `From` conversions that preserves the full ID.
+Run it with `cargo run --example minbin_wrapper`.
+
 ## Building an ID in steps
 
 `ContentHasher` lets you add bytes or MinBin values before producing an ID.

@@ -8,7 +8,7 @@ description = "Deterministic, platform-agnostic, content-derived, decentralized 
 repository = "https://github.com/humacss/contentid"
 documentation = "https://docs.rs/contentid"
 readme = "README.md"
-include = ["/src/**", "/tests/**", "/benches/**", "/Cargo.toml", "/README.md", "/LICENSE"]
+include = ["/src/**", "/tests/**", "/benches/**", "/examples/minbin_wrapper.rs", "/Cargo.toml", "/README.md", "/LICENSE"]
 keywords = ["id", "deterministic", "content-addressable", "no-std", "hashing"]
 categories = ["data-structures", "encoding", "no-std"]
 
