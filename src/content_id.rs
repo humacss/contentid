@@ -54,7 +54,7 @@ impl fmt::Display for ContentId {
 /// Decode the first 8 digest bytes as an `i64` with minbin's primitive format.
 impl From<&ContentId> for i64 {
     fn from(id: &ContentId) -> Self {
-        decode_digest_prefix(i64::default, &id.as_bytes()[..I64_DIGEST_BYTES])
+        decode_digest_prefix(&id.as_bytes()[..I64_DIGEST_BYTES])
     }
 }
 
@@ -67,7 +67,7 @@ impl From<ContentId> for i64 {
 /// Decode the first 8 digest bytes as a `u64` with minbin's primitive format.
 impl From<&ContentId> for u64 {
     fn from(id: &ContentId) -> Self {
-        decode_digest_prefix(u64::default, &id.as_bytes()[..U64_DIGEST_BYTES])
+        decode_digest_prefix(&id.as_bytes()[..U64_DIGEST_BYTES])
     }
 }
 
@@ -80,7 +80,7 @@ impl From<ContentId> for u64 {
 /// Decode the first 16 digest bytes as a `u128` with minbin's primitive format.
 impl From<&ContentId> for u128 {
     fn from(id: &ContentId) -> Self {
-        decode_digest_prefix(u128::default, &id.as_bytes()[..U128_DIGEST_BYTES])
+        decode_digest_prefix(&id.as_bytes()[..U128_DIGEST_BYTES])
     }
 }
 
@@ -143,11 +143,11 @@ impl fmt::Display for ContentId128 {
     }
 }
 
-fn decode_digest_prefix<'a, T>(init: impl FnOnce() -> T, bytes: &'a [u8]) -> T
+fn decode_digest_prefix<'a, T>(bytes: &'a [u8]) -> T
 where
-    T: ToFromBytes<'a>,
+    T: Default + ToFromBytes<'a>,
 {
-    minbin::from_bytes(init, bytes)
+    minbin::from_bytes(bytes)
         .expect("fixed-size primitive digest prefixes must be valid minbin values")
 }
 

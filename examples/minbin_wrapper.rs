@@ -51,6 +51,7 @@ fn main() {
     let bytes = minbin::to_bytes(&WireId::from(id)).unwrap();
     assert_eq!(bytes.as_slice(), id.as_bytes());
 
-    let decoded = minbin::from_bytes(|| WireId(ContentId::ZERO), &bytes).unwrap();
+    let mut decoded = WireId(ContentId::ZERO);
+    minbin::bytes_into(&mut decoded, &bytes).unwrap();
     assert_eq!(ContentId::from(decoded), id);
 }

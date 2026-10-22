@@ -404,7 +404,7 @@ across builds, Rust releases, or platforms.
 
 Before MinBin 1.0 is published, test against a local checkout of its
 `add-types` branch. Compatibility was checked at revision
-`bc87f2945f6ba0de0ac0c45c30ff2430473d94a4`. Create an ignored
+`d0cce27aecef4b1eb4af293de113dbd0783e1217`. Create an ignored
 `.cargo/config.toml` using the path to that checkout:
 
 ```toml

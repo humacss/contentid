@@ -117,9 +117,9 @@ fn content_id_converts_to_common_integers_with_minbin_digest_prefixes() {
         0x1e, 0x1f,
     ];
     let id = ContentId::from_hash_bytes(bytes);
-    let expected_i64 = minbin::from_bytes(i64::default, &bytes[..8]).unwrap();
-    let expected_u64 = minbin::from_bytes(u64::default, &bytes[..8]).unwrap();
-    let expected_u128 = minbin::from_bytes(u128::default, &bytes[..16]).unwrap();
+    let expected_i64: i64 = minbin::from_bytes(&bytes[..8]).unwrap();
+    let expected_u64: u64 = minbin::from_bytes(&bytes[..8]).unwrap();
+    let expected_u128: u128 = minbin::from_bytes(&bytes[..16]).unwrap();
 
     assert_eq!(expected_i64, i64::from(id));
     assert_eq!(expected_i64, i64::from(&id));

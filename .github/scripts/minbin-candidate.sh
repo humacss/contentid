@@ -5,5 +5,5 @@ set -euo pipefail
 mkdir -p .cargo
 cat > .cargo/config.toml <<'EOF'
 [patch.crates-io]
-minbin = { git = "https://github.com/humacss/minbin.git", rev = "bc87f2945f6ba0de0ac0c45c30ff2430473d94a4" }
+minbin = { git = "https://github.com/humacss/minbin.git", rev = "d0cce27aecef4b1eb4af293de113dbd0783e1217" }
 EOF
